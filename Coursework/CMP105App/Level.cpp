@@ -1,7 +1,7 @@
 #include "Level.h"
 
 Level::Level(sf::RenderWindow& hwnd, Input& in) :
-    BaseLevel(hwnd, in), m_timerText(m_font), m_winText(m_font)
+    BaseLevel(hwnd, in), m_timerText(m_font), m_winText(m_font), m_scoreBoard(m_font)
 {
     m_isGameOver = false;
 
@@ -47,12 +47,16 @@ Level::Level(sf::RenderWindow& hwnd, Input& in) :
     m_winText.setFillColor(sf::Color::Blue);
     m_winText.setPosition({ -1000.f, 100.f });  // outside of view
 
+    // scoreboard text
+    m_scoreBoard.setFont(m_font);
+
 
     // setup goal
     m_goal.setSize({ 50, 50 });
     m_goal.setFillColor(sf::Color::Blue);
     m_goal.setPosition({ 250, 250 });
     m_goal.setCollisionBox({ { 0,0 }, { 50,50 } });
+
 
     // setup walls
     for (int i = 0; i < 2; i++)
@@ -167,7 +171,10 @@ void Level::manageCollisions()
 // Update game objects
 void Level::update(float dt)
 {
-    if (m_isGameOver) return;   // if the game is over, don't continue trying to process game logic
+    if (m_isGameOver)
+    {
+        return; // if the game is over, don't continue trying to process game logic
+    }
 
     m_playerRabbit->update(dt);
     for (Sheep* s : m_sheepList)
@@ -180,9 +187,16 @@ void Level::update(float dt)
     m_timerText.setString("Time: " + std::to_string(static_cast<int>(timeElapsed)));
 
 
+  
     manageCollisions();
     UpdateCamera();
     m_isGameOver = CheckWinCondition();
+
+    if (m_isGameOver)
+    {
+        writeHighScore(timeElapsed);
+        displayScoreboard();
+    }
 
 }
 
@@ -199,9 +213,50 @@ void Level::render()
     }
     m_window.draw(*m_playerRabbit);
     m_window.draw(m_timerText);
-    m_window.draw(m_winText);
+    
+    if (m_isGameOver)
+    {
+        m_window.draw(m_winText);
+        m_window.draw(m_scoreBoard);
+    }
     
 	endDraw();
+}
+
+void Level::writeHighScore(float time)
+{
+    std::ofstream fileToWriteScore("data/highScore.txt",  std::ios::app);
+
+    if (fileToWriteScore.is_open() )
+    {
+        fileToWriteScore << std::fixed << std::setprecision(2) << time << "\n";
+        fileToWriteScore.close();
+    }
+    else
+    {
+        std::cerr << "\nall hail the net";
+    }
+    
+
+}
+
+void Level::displayScoreboard()
+{
+    std::ifstream displayScore("data/highScore.txt");
+    std::string scoreName;
+    std::string scoreText = "Hightscores:\n";
+
+    while (std::getline(displayScore, scoreName))
+    {
+        scoreText += scoreName + "\n";
+    }
+    displayScore.close();
+
+    m_scoreBoard.setString(scoreText);
+    m_scoreBoard.setCharacterSize(24);
+    m_scoreBoard.setFillColor(sf::Color::Black);
+    m_scoreBoard.setPosition({ 350, 350 });
+
 }
 
 

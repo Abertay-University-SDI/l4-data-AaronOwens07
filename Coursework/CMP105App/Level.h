@@ -6,6 +6,9 @@
 #include "Sheep.h"
 #include "Rabbit.h"
 
+#include <iomanip>
+#include <fstream>
+
 class Level : BaseLevel {
 public:
 	Level(sf::RenderWindow& window, Input& input);
@@ -40,5 +43,9 @@ private:
     sf::Font m_font;
     sf::Text m_timerText;
     sf::Text m_winText;
+
+    sf::Text m_scoreBoard;
 	
+    void writeHighScore(float time);
+    void displayScoreboard();
 };
